@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Date: Wed, 01 Dec 2010 16:03:07 GMT
+Server: Apache
+X-Powered-By: PHP/5.2.13
+Content-Length: 66
+Content-Type: text/html
+
+hi bob how are you?Array
+(
+    [name] => blah
+    [sex] => male
+)
