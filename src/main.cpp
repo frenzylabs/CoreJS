@@ -85,11 +85,7 @@ int RunMain (int argc, char const *argv[])
    
    Handle<ObjectTemplate> global = ObjectTemplate::New();
    
-   Core::System::Init(global);
-   Core::Env::Init(global);
-   Core::Directory::Init(global);
-   Core::File::Init(global);
-   Core::Module::Init(global);
+   CORE_JS_INIT(global);
 
    Persistent<Context>baseContext_ = Context::New(NULL, global);
    Context::Scope contextScope(baseContext_);
@@ -110,7 +106,6 @@ int RunMain (int argc, char const *argv[])
    
    Handle<Value> params[2] = { String::New(filenameOnly.c_str()), String::New(runningPath.c_str()) };
    Handle<Value> funcResult = pFunc->Call(Context::GetCurrent()->Global(), 2, params);
-
 
    baseContext_.Dispose();
    V8::Dispose();
