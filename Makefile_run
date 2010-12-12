@@ -5,11 +5,11 @@ SRC_DIR = src
 ## then (for debug) run: scons mode=debug library=shared
 ## once that is done, run: install_name_tool -id /usr/local/v8/libv8_g.dylib libv8_g.dylib
 
-BUILD_TARGET = build/corejs.dylib
+BUILD_TARGET = build/core
 V8_DIR       = /usr/local/v8/libv8_g.dylib
 V8_INC       = /usr/local/v8/include
 
-SOURCES =   $(SRC_DIR)/core.cpp \
+SOURCES =   $(SRC_DIR)/main.cpp \
             $(SRC_DIR)/System/system.cpp \
             $(SRC_DIR)/Env/env.cpp \
             $(SRC_DIR)/Directory/directory.cpp \
@@ -36,9 +36,7 @@ TARGET = $(BUILD_TARGET)
 
 OBJS = $(SOURCES:.cpp=.o)
 CC=g++
-
-SHARED= -a -shared -rdynamic
-CXXFLAGS= -arch i386 -Wall -lpthread $(SHARED)
+CXXFLAGS= -arch i386 -Wall -lpthread
 
 all: $(OBSJ) 
 	$(CC) $(CXXFLAGS) $(HEADERS) $(SOURCES) -o $(TARGET) $(LIBS)

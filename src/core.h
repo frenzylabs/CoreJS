@@ -14,4 +14,10 @@
 #include "ObjectWrapT.h"
 
 
+#define CORE_JS_INIT(context)       Core::System::Init(context);      \
+                                    Core::Env::Init(context);         \
+                                    Core::Directory::Init(context);   \
+                                    Core::File::Init(context);        \
+                                    Core::Module::Init(context);
+
 #endif
