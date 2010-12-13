@@ -1,11 +1,7 @@
 #ifndef __socket_h__
 #define __socket_h__
 
-#include <event2/bufferevent.h>
-#include <event2/buffer.h>
-#include <event2/listener.h>
-#include <event2/util.h>
-#include <event2/event.h>
+#include "common.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,10 +14,13 @@
 #include <fcntl.h>
 
 #include <map>
+#include <errno.h>
 
-#include "common.h"
-#include "threadPool.h"
+
+#include "BaseEvent.h"
+//#include "threadPool.h"
 #include <ObjectWrapT.h>
+
 
 
 

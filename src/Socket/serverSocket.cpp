@@ -1,18 +1,16 @@
 #include "serverSocket.h"
-#include "string.h"
-#include <string.h>
-#include <errno.h>
 
 const int MAXHOSTNAME = 200;
 const int MAXCONNECTIONS = 5;
 const int MAXRECV = 500;
 
+
+
 using namespace std;
 using namespace v8;
 namespace Core
 {
-	
-	ThreadPool *pool = ThreadPool::instance();
+	BaseEvent *myEvents = BaseEvent::instance();	
 
     // C/C++ Methods
 	ServerSocket::ServerSocket()
@@ -42,7 +40,7 @@ namespace Core
 		}
 
 		struct timeval delay = { 0, 0 };
-		event_base_loopexit(pool->base, &delay);
+		event_base_loopexit(myEvents->base, &delay);
 	}
 	
 	void ServerSocket::onServerRead(evutil_socket_t fd, short what, void * s){
@@ -102,12 +100,11 @@ namespace Core
 		
 		if(serve->FuncIsSet.count("onConnect")){
 			if((serve->FuncIsSet["onConnect"])->IsFunction()){
-				//Handle<Value> val = {""};
 				Handle<Value> res = (serve->FuncIsSet["onConnect"])->Call(v8::Context::GetCurrent()->Global(), 0, NULL);
 			}
 		}
 
-		struct event * ev = event_new(pool->base, so->m_sock, EV_READ|EV_PERSIST, ServerSocket::onServerRead, (void *)(serve));
+		struct event * ev = event_new(myEvents->base, so->m_sock, EV_READ|EV_PERSIST, ServerSocket::onServerRead, (void *)(serve));
 		event_add(ev, NULL);
 		serve->socketEvents[fd] = ev;
 	}
@@ -140,13 +137,13 @@ namespace Core
 		so->m_addr.sin_port = htons(port);
 
 		
-		struct event * hup_event = evsignal_new(pool->base, SIGINT, ServerSocket::sighup_function, (void *)so);
+		struct event * hup_event = evsignal_new(myEvents->base, SIGINT, ServerSocket::sighup_function, (void *)so);
 		event_add(hup_event, NULL);
 		
 		/** This binds the socket to the port and begins listening for connections.  
 		  * When a connection has been established will call the callback function
 		 **/
-		so->listener = evconnlistener_new_bind(pool->base, ServerSocket::accept_conn_cb, (void *)so,
+		so->listener = evconnlistener_new_bind(myEvents->base, ServerSocket::accept_conn_cb, (void *)so,
 			LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_EXEC, -1, (struct sockaddr*)&so->m_addr, sizeof(so->m_addr));
 
 		if (!so->listener) {
@@ -154,7 +151,7 @@ namespace Core
 		}
 
 		
-		if (so->getObjectTemplate().IsEmpty()) {
+		if (handle_template.IsEmpty()) {
 			v8::Handle<v8::FunctionTemplate> fpt = FunctionTemplate::New(); 
 			fpt->SetClassName(String::New("Socket"));
 			Handle<ObjectTemplate> raw_template = fpt->InstanceTemplate();

@@ -1,22 +1,18 @@
 #include "Socket.h"
 #include "clientSocket.h"
 #include "serverSocket.h"
-#include "string.h"
-#include <string.h>
-#include <errno.h>
-//#include "SocketException.h"
 
 const int MAXHOSTNAME = 200;
 const int MAXCONNECTIONS = 5;
 const int MAXRECV = 500;
+
+
 
 using namespace std;
 using namespace v8;
 namespace Core
 {
 	
-//	ThreadPool *pool = ThreadPool::instance();
-
     // C/C++ Methods
 	Socket::Socket() :m_sock (-1)
 	{

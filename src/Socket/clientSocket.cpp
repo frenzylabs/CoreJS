@@ -1,22 +1,20 @@
 #include "clientSocket.h"
-#include "string.h"
-#include <string.h>
-#include <errno.h>
 //#include "SocketException.h"
 
 const int MAXHOSTNAME = 200;
 const int MAXCONNECTIONS = 5;
 const int MAXRECV = 500;
 
-	ThreadPool *tpool = ThreadPool::instance();
+
+
 using namespace std;
 using namespace v8;
 namespace Core
 {
-
+//	BaseEvent *myEvents = BaseEvent::instance();
 //	ThreadPool *pool = ThreadPool::instance();
 
-	
+	BaseEvent *myCEvents = BaseEvent::instance();
 
     // C/C++ Methods
 	ClientSocket::ClientSocket()
@@ -101,11 +99,11 @@ namespace Core
 			return scope.Close(THROW_ERROR("Could not bind to port\n"));
 		}
 
-		struct event * stdev = event_new(tpool->base, fileno(stdin), EV_READ|EV_PERSIST, ClientSocket::readStdin, (void *)(so));
+		struct event * stdev = event_new(myCEvents->base, fileno(stdin), EV_READ|EV_PERSIST, ClientSocket::readStdin, (void *)(so));
 		event_add(stdev, NULL);
 		so->whichEvents["stdin"] = stdev;
 		
-		struct event * readEvent = event_new(tpool->base, so->m_sock, EV_READ|EV_PERSIST, ClientSocket::onRead, (void *)(so));
+		struct event * readEvent = event_new(myCEvents->base, so->m_sock, EV_READ|EV_PERSIST, ClientSocket::onRead, (void *)(so));
 		event_add(readEvent, NULL);
 		so->whichEvents["readEvent"] = readEvent;
 		

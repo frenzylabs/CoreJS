@@ -9,11 +9,6 @@
 #include <netinet/in.h>
 #endif
 
-#include <event2/bufferevent.h>
-#include <event2/buffer.h>
-#include <event2/listener.h>
-#include <event2/util.h>
-#include <event2/event.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -21,26 +16,32 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <ctype.h>
+#include <fcntl.h>
 
+#include "threadPool.h"
 #include "url.h"
 #include <iostream>
+#include "session.h"
 #include <ObjectWrapT.h>
 
 using namespace v8;
+
 namespace Core
-{
+{	
 	class Http : Core::ObjectWrapT<Http>
 	{
 		public:	
 			Http(){};
 			~Http(){};
 		
+			v8::Persistent<v8::Function> callback;
+			
 			static void Init   (Handle<ObjectTemplate> &obj);
-		
+			static std::string getPostData(Session *te);
+			static std::string getGetData(Session *te);
+			
 			JS_METHOD_DECLARE(Get);
 			JS_METHOD_DECLARE(Post);
-		
-			//JS_METHOD_DECLARE(New);
 	};
 }
 

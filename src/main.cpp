@@ -1,8 +1,26 @@
 #include "main.h"
+#include "BaseEvent.h"
+#include <vector>
+#include <algorithm>
+#include "session.h"
 
 using namespace std;
 using namespace v8;
 using namespace Core;
+
+
+
+static int SetNonBlocking(int fd) {
+  int flags = fcntl(fd, F_GETFL, 0);
+  if (flags == -1)
+    flags = 0;
+  return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+
+ThreadPool *myThreadPool = ThreadPool::instance();
+BaseEvent *myEvents = BaseEvent::instance();
+
 
 char *MainReadFile(const char *name)
 {
@@ -34,85 +52,99 @@ void AtExit()
    fflush(stderr);
 }
 
+
 int RunMain (int argc, char const *argv[])
 {
-   string filename;
-   filename = (argc > 1)? string(argv[1]) : "main.js";
+	
+	string filename;
+	filename = (argc > 1)? string(argv[1]) : "main.js";
 
-   string usingPath;
-   
-   if((Path::IsAbsolute(string(filename.c_str()))))
-   {
-      usingPath = filename;
-   }
-   else 
-   {
-      char currentPath[FILENAME_MAX];
-      getcwd(currentPath, sizeof(currentPath));
+	char currentPath[FILENAME_MAX];
+	getcwd(currentPath, sizeof(currentPath));
 
-      char fullpath[100];
+	char fullpath[100];
 
-      strcpy(fullpath, currentPath);
-      strcat(fullpath, "/");
+	strcpy(fullpath, currentPath);
+	strcat(fullpath, "/");
 
+	const char *Cfilename = filename.c_str();
+	strcat(fullpath, Cfilename);
 
-      const char *Cfilename = filename.c_str();
-      strcat(fullpath, Cfilename);
-      
-      usingPath = string(fullpath);
-   }
-   
+	struct stat fileStat;
+	int statRes;
 
+	statRes = stat(fullpath, &fileStat);
+	if(statRes == -1)
+	{
+	    printf("\nCould not find file: %s\n", fullpath);
+	    return 0;
+	} 
 
-   string runningPath = usingPath;
-   runningPath = runningPath.substr(0, runningPath.find_last_of('/'));
-   PathHistory::Instance()->addPath(string(runningPath));
+	char pathBuffer[PATH_MAX + 1];
+
+	string mainpath = string(realpath(__FILE__, pathBuffer));
+	mainpath = mainpath.substr(0, mainpath.rfind('/'));
 
 
-   struct stat fileStat;
-   int statRes;
-   
-   statRes = stat(usingPath.c_str(), &fileStat);
-   if(statRes == -1)
-   {
-       printf("\nCould not find file: %s\n", usingPath.c_str());
-       return 0;
-   } 
-   
-   
-   V8::Initialize();
-   HandleScope scope;
-   
-   Handle<ObjectTemplate> global = ObjectTemplate::New();
-   
-   CORE_JS_INIT(global);
+	evthread_use_pthreads();
+	
 
-   Persistent<Context>baseContext_ = Context::New(NULL, global);
-   Context::Scope contextScope(baseContext_);
+	int fds[2];
+	if (pipe(fds)) {
+	  cerr << "pipe() failed, errno: " << errno;
+	   return false;
+	}
+	if (SetNonBlocking(fds[0])) {
+	  cerr << "SetNonBlocking for pipe fd[0] failed, errno: " << errno;
+	  return false;
+	}
+	if (SetNonBlocking(fds[1])) {
+	  cerr << "SetNonBlocking for pipe fd[1] failed, errno: " << errno;
+	  return false;
+	}
+	myThreadPool->wakeup_pipe_out = fds[0];
+	myThreadPool->wakeup_pipe_in = fds[1];
+	
 
-   string dirname = filename.substr(0, filename.find_last_of("/"));
-   string filenameOnly = filename.substr(filename.find_last_of("/") + 1, filename.length());
-   
-   string source = string(MainReadFile(usingPath.c_str()));
-   source = "(function(__FILE__, __DIR__) { " + source + " })";
+	V8::Initialize();
+	HandleScope scope;
 
-   Path::Chdir(dirname);
-   
-   Handle<Script> script = Script::Compile(String::New(source.c_str()));
-   Handle<Value> result = script->Run();
-   
-   Handle<Function> func = Handle<Function>::Cast(result);
-   Persistent<Function> pFunc = Persistent<Function>::New(func);
-   
-   Handle<Value> params[2] = { String::New(filenameOnly.c_str()), String::New(runningPath.c_str()) };
-   Handle<Value> funcResult = pFunc->Call(Context::GetCurrent()->Global(), 2, params);
+	Handle<ObjectTemplate> global = ObjectTemplate::New();
+	global->Set(String::New("JS_SYS_PATH"), String::New(mainpath.c_str()));
 
-   baseContext_.Dispose();
-   V8::Dispose();
-   
-   atexit(AtExit);
-   
-   return 0;
+	Core::System::Init(global);
+	Core::Env::Init(global);
+	Core::Directory::Init(global);
+	Core::File::Init(global);
+	Core::Module::Init(global);
+	Core::Http::Init(global);
+	Core::Socket::Init(global);
+
+	Persistent<Context>baseContext_ = Context::New(NULL, global);
+	Context::Scope contextScope(baseContext_);
+	
+	Core::System::ExecuteString (String::New(MainReadFile(fullpath)), String::New(filename.c_str()), true, true);
+	
+	pthread_mutex_lock(&myThreadPool->threadLock);
+	if(myThreadPool->eventCnt>0){
+		myThreadPool->wakeup_event = event_new(myEvents->base, myThreadPool->wakeup_pipe_out, EV_READ|EV_PERSIST, ThreadPool::onWakeup, (void *)"");
+		event_add(myThreadPool->wakeup_event, NULL);
+	}
+	pthread_mutex_unlock(&myThreadPool->threadLock);
+	
+	event_base_dispatch(myEvents->base);
+
+	
+	baseContext_.Dispose();
+	V8::Dispose();
+
+	close(myThreadPool->wakeup_pipe_in);
+	close(myThreadPool->wakeup_pipe_out);
+	delete myThreadPool;
+	free(myEvents);
+	atexit(AtExit);
+
+	return 0;
 }
 
 int main (int argc, char const *argv[])

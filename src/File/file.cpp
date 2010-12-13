@@ -1,4 +1,6 @@
 #include "file.h"
+#include "Session.h"
+#include "threadPool.h"
 
 using namespace std;
 using namespace v8;
@@ -6,11 +8,37 @@ using namespace v8;
 namespace Core
 {
 	
+	ThreadPool *filePool = ThreadPool::instance();
+	
     // C/C++ Methods
 	File::File():file(NULL),filepath(),filemode(){}
 	File::~File() {}
 	
-	char *File::ReadFile(const char *name)
+	string File::readFileCb(Session *sc)
+	{
+		
+		File *fp = sc->fp;
+		if(fp->filepath == "" || fp->filemode=="")
+			return "Cannot open file";
+			
+		if(fp->file == NULL){
+			fp->file = fopen(fp->filepath.c_str(), fp->filemode.c_str());
+		}
+		fseek(fp->file, 0, SEEK_END);
+        int size = ftell(fp->file);
+        rewind(fp->file);
+
+        char *chars = new char[size + 1];
+        chars[size] = '\0';
+        
+        for(int i = 0; i < size;)
+        {
+            int read = fread(&chars[i], 1, size - i, fp->file);
+            i += read;
+        }
+		return chars;
+	}
+	char * File::ReadFile(const char *name)
     {
         FILE *readFile = fopen(name, "rb");
         if(readFile == NULL)
@@ -41,7 +69,7 @@ namespace Core
 		HandleScope scope;
 		ARG_LENGTH(1);
         String::Utf8Value filename(args[0]);    
-        char *contents = File::ReadFile(*filename);
+        char *contents = (File::ReadFile(*filename));
         return scope.Close(String::New(contents, strlen(contents)));
     }
 
@@ -267,15 +295,16 @@ namespace Core
 			v8::Handle<v8::ObjectTemplate> protoTpl = fpt->PrototypeTemplate();
 
 
+			protoTpl->Set(String::New("onReadCb"), FunctionTemplate::New(onReadCb));
 			protoTpl->Set(String::New("open"), FunctionTemplate::New(open));
-	        protoTpl->Set(String::New("close"), FunctionTemplate::New(close));
-	        protoTpl->Set(String::New("read"), FunctionTemplate::New(read));
-	        protoTpl->Set(String::New("write"), FunctionTemplate::New(write));
-	        protoTpl->Set(String::New("remove"), FunctionTemplate::New(Remove));
-	        protoTpl->Set(String::New("rewind"), FunctionTemplate::New(Rewind));
-	        protoTpl->Set(String::New("getFilePath"), FunctionTemplate::New(getFilePath));
-	        protoTpl->Set(String::New("getFileMode"), FunctionTemplate::New(getFileMode));
-		
+			protoTpl->Set(String::New("close"), FunctionTemplate::New(close));
+			protoTpl->Set(String::New("read"), FunctionTemplate::New(read));
+			protoTpl->Set(String::New("write"), FunctionTemplate::New(write));
+			protoTpl->Set(String::New("remove"), FunctionTemplate::New(Remove));
+			protoTpl->Set(String::New("rewind"), FunctionTemplate::New(Rewind));
+			protoTpl->Set(String::New("getFilePath"), FunctionTemplate::New(getFilePath));
+			protoTpl->Set(String::New("getFileMode"), FunctionTemplate::New(getFileMode));
+
 		}
 		
 		return scope.Close(fp->WrapObject());
@@ -299,12 +328,35 @@ namespace Core
 		return scope.Close(String::New(fp->filemode.c_str(), fp->filemode.length()));
 	}
 	
+	JS_METHOD(File::onReadCb)
+	{
+		HandleScope scope;
+		/*** Unwrapping c++ pointer ***/
+		File *fp = UnwrapObject(args.This());
+		
+		Session * nc = new Session();
+		nc->fp = fp;
+		if(args.Length()==1){
+			if(args[0]->IsFunction()){
+				nc->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
+				nc->funcptr = &File::readFileCb;
+				filePool->dispatch(nc);
+				return scope.Close(Undefined());
+			}
+		}
+		string data = File::readFileCb(nc);
+		delete(nc);
+
+		return scope.Close(String::New(data.c_str()));
+		
+	}
+	
 	void File::Init(Handle<ObjectTemplate> &global)
     {
 		/**  This will create all the global functions and when a new File is created 
 		  *  will create the default template for the File class then. 
 		**/
-        HandleScope scope;       
+		HandleScope scope;       
 		global->Set(String::New("File"), FunctionTemplate::New(New));
 		global->Set(String::New("readFile"), FunctionTemplate::New(readFile));
 		global->Set(String::New("writeFile"), FunctionTemplate::New(writeFile));
