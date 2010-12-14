@@ -22,6 +22,11 @@ using namespace v8;
 
 namespace Core
 {
+   /**
+    * @Class Module
+    * Class for handling retrieving and loading libraries, scripts, external code.
+    * following the CommonJS spec for relative path and the 'require' method.
+    */
    class Module
    {
    protected:
