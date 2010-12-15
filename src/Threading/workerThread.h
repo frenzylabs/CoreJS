@@ -4,17 +4,18 @@
 #define event_workerThread_H
 
 #include "session.h"
+#include "ThreadBase.h"
 
 class WorkerThread
 {	
 	public:
-	WorkerThread(){};
-	~WorkerThread(){};
-	
+		WorkerThread(){};
+		~WorkerThread(){};
+
 		pthread_t wId;
 		pthread_mutex_t wLock;
 		pthread_cond_t wCond;
-		Session * cursession;		
+		ThreadBase *tb;	
 };
 
 #endif

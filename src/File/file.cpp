@@ -14,10 +14,10 @@ namespace Core
 	File::File():file(NULL),filepath(),filemode(){}
 	File::~File() {}
 	
-	string File::readFileCb(Session *sc)
+	string File::readFileCb()
 	{
 		
-		File *fp = sc->fp;
+		File *fp = this;
 		if(fp->filepath == "" || fp->filemode=="")
 			return "Cannot open file";
 			
@@ -136,17 +136,20 @@ namespace Core
 		
     JS_METHOD(File::open)
     {
-		ARG_LENGTH(2);
+	//	ARG_LENGTH(2);
         HandleScope scope;
 
 		/*** Unwrapping c++ pointer ***/
 		File *fp = UnwrapObject(args.This());
-
-		String::Utf8Value fpath(args[0]);
-		String::Utf8Value fmode(args[1]);
-		fp->filepath = static_cast<string>(*fpath);		
-		fp->filemode = static_cast<string>(*fmode);
-
+		if(args.Length()< 2 && fp->filepath=="" && fp->filemode==""){			
+			return scope.Close(THROW_EXCEPTION(Error, "Cannot open file"));
+		}
+		if(args.Length()==2){
+			String::Utf8Value fpath(args[0]);
+			String::Utf8Value fmode(args[1]);
+			fp->filepath = static_cast<string>(*fpath);		
+			fp->filemode = static_cast<string>(*fmode);
+		}
 		fp->file = fopen(fp->filepath.c_str(), fp->filemode.c_str());
 		
 		if(fp->file == NULL)
@@ -213,8 +216,6 @@ namespace Core
 		/*** Unwrapping c++ pointer ***/
 		File *fp = UnwrapObject(args.This());
 		
-		printf("'writing to file %s'", fp->filepath.c_str());
-		
 		if(fp->file == NULL){
 			return scope.Close(THROW_EXCEPTION(Error, "No file specified"));
 		}else{
@@ -270,12 +271,13 @@ namespace Core
 			String::Utf8Value fmode(args[1]);
 			
 			/***
-			*	Some weird stuff going on here.  Had to make the variables as strings.
+			*	 Had to make the variables as strings.
 			*   If I didnt then when I created new instances in JS code the other instances were getting
 			*   overwritten.  
 			***/
 			fp->filepath = static_cast<string>(*fpath);		
 			fp->filemode = static_cast<string>(*fmode);
+			fp->file = fopen(fp->filepath.c_str(), fp->filemode.c_str());
 		}
 		
 	    /**
@@ -333,21 +335,22 @@ namespace Core
 		HandleScope scope;
 		/*** Unwrapping c++ pointer ***/
 		File *fp = UnwrapObject(args.This());
-		
-		Session * nc = new Session();
-		nc->fp = fp;
+	
 		if(args.Length()==1){
 			if(args[0]->IsFunction()){
-				nc->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
-				nc->funcptr = &File::readFileCb;
-				filePool->dispatch(nc);
+				fp->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
+				fp->setCallback(fp, &File::readFileCb);
+				filePool->dispatch(fp);
 				return scope.Close(Undefined());
 			}
 		}
-		string data = File::readFileCb(nc);
-		delete(nc);
+				//string data = File::readFileCb();
+				//delete(nc);		
 
-		return scope.Close(String::New(data.c_str()));
+//		return scope.Close(String::New(data.c_str()));
+		
+		return scope.Close(Undefined());
+		
 		
 	}
 	

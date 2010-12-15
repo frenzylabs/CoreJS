@@ -31,12 +31,11 @@ namespace Core
 	
 	ThreadPool *tpool = ThreadPool::instance();
 	
-	string Http::getPostData(Session *te){
-		
-		char *host =  const_cast<char *>(te->myClient->host.c_str());
-		char *path = const_cast<char *>(te->myClient->path.c_str());
-		int port = te->myClient->port;
-		std::string params =  te->myClient->params;
+	string Http::getPostData(){
+		char *host =  const_cast<char *>(this->host.c_str());
+		char *path = const_cast<char *>(this->path.c_str());
+		int port = this->port;
+		std::string params =  this->params;
 		
 		int sock, bytes;
 		struct sockaddr_in sockaddr;
@@ -220,9 +219,7 @@ namespace Core
       URL url;
       parse_url(*urlArg, &url);
 
-		Session * nc = new Session();
-		nc->myClient = new httpClient();
-		
+		Http *client = new Http();
 		string paramStr = "";
 		
 		
@@ -238,26 +235,82 @@ namespace Core
 			}
 		}
 		
-		nc->myClient->host = url.host;	
-		nc->myClient->path = url.path;
-		nc->myClient->port = url.port;
-		nc->myClient->params = paramStr;
+		client->host = url.host;	
+		client->path = url.path;
+		client->port = url.port;
+		client->params = paramStr;
 		
-		
+		string data = "";
+
 		if(args.Length()==3){
 			if(args[2]->IsFunction()){
-				nc->callback = Persistent<Function>::New(Local<Function>::Cast(args[2]));
-				nc->funcptr = &getPostData;
-				tpool->dispatch(nc);
+				client->callback = Persistent<Function>::New(Local<Function>::Cast(args[2]));
+				client->setCallback(client, &Http::getPostData);
+				tpool->dispatch(client);
 				return scope.Close(Undefined());
 			}
+		}else{
+		
+		 	data = client->getPostData();
+			//delete(client);	
 		}
-		string data = Http::getPostData(nc);
-		delete(nc);
 		return scope.Close(String::New(data.c_str()));
 
    }
-/*
+
+	JS_METHOD(Http::GetObj)
+	{
+		HandleScope scope;
+		//Http *client = UnwrapObject(args.This());
+		
+		return scope.Close(Undefined());
+	}
+
+	JS_METHOD(Http::PostObj)
+	{
+		HandleScope scope;
+		Http *client = UnwrapObject(args.This());
+		
+		String::Utf8Value urlArg(args[0]);
+      URL url;
+      parse_url(*urlArg, &url);
+		
+		string paramStr = "";
+		
+		if(args[1]->IsObject()){
+			Local<v8::Object> params = args[1]->ToObject();
+			Local<v8::Array> props = params->GetPropertyNames();
+			int paramLength = static_cast<unsigned int>(props->Length());
+			for(int i=0; i< paramLength; i++){
+				String::Utf8Value propval(params->Get(props->Get(i)));
+				String::Utf8Value propKey(props->Get(i));
+				if(i!=0) paramStr.append("&");
+				paramStr.append(static_cast<string>(*propKey)+"="+static_cast<string>(*propval));
+			}
+		}
+		
+		client->host = url.host;	
+		client->path = url.path;
+		client->port = url.port;
+		client->params = paramStr;
+		
+		if(args.Length()==3){
+			if(args[2]->IsFunction()){
+				Http * c = new Http();
+				c->host = url.host;	
+				c->path = url.path;
+				c->port = url.port;
+				c->params = paramStr;
+				c->callback = Persistent<Function>::New(Local<Function>::Cast(args[2]));
+				c->setCallback(c, &Http::getPostData);
+				tpool->dispatch(c);
+				return scope.Close(Undefined());
+			}
+		}
+		
+		string data = client->getPostData();
+		return scope.Close(String::New(data.c_str()));
+	}
 
 	JS_METHOD(Http::New)
 	{
@@ -268,30 +321,17 @@ namespace Core
 		}
 
 		// Create the new instance of the c++ class File
-		Http *client = new httpClient();
+		Http *client = new Http();
 
-		if(args.Length()==2){
-			String::Utf8Value fpath(args[0]);
-			String::Utf8Value fmode(args[1]);
-
-			***
-			*	Some weird stuff going on here.  Had to make the variables as strings.
-			*   If I didnt then when I created new instances in JS code the other instances were getting
-			*   overwritten.  
-			***
-			//fp->filepath = static_cast<string>(*fpath);		
-			//fp->filemode = static_cast<string>(*fmode);
-		}
-
-	    **
+	   /**
 		* Create the actual template object. 
 		* Only need to do this once.  We'll store the object template in a persistent object.
 		* This will allow us to create multiple instances of the object	
 		* THE "handle_template" var is a Persistent<ObjectTemplate> and is declared in the ObjectWrap template;
-		***	
+		***/	
 		if (handle_template.IsEmpty()) {
 			v8::Handle<v8::FunctionTemplate> fpt = FunctionTemplate::New(); 
-			fpt->SetClassName(String::New("httpClient"));
+			fpt->SetClassName(String::New("Http"));
 			Handle<ObjectTemplate> raw_template = fpt->InstanceTemplate();
 			raw_template->SetInternalFieldCount(1);
 
@@ -299,13 +339,13 @@ namespace Core
 
 			v8::Handle<v8::ObjectTemplate> protoTpl = fpt->PrototypeTemplate();
 
-			protoTpl->Set(String::New("post"), FunctionTemplate::New(Post));
-			protoTpl->Set(String::New("get"), FunctionTemplate::New(Get));
+			protoTpl->Set(String::New("post"), FunctionTemplate::New(PostObj));
+			protoTpl->Set(String::New("get"), FunctionTemplate::New(GetObj));
 
 		}
 
 		return scope.Close(client->WrapObject());
-	}*/
+	}
 
 	
 	void Http::Init(Handle<ObjectTemplate> &global)
@@ -313,13 +353,14 @@ namespace Core
 		/**  This will create all the global functions and when a new File is created 
 		*  will create the default template for the File class then. 
 		**/
-		HandleScope scope;     
-		  
+	
 		v8::Handle<v8::ObjectTemplate> httpTempl = ObjectTemplate::New();
 
 		httpTempl->Set(String::New("post"), FunctionTemplate::New(Post));
 		httpTempl->Set(String::New("get"), FunctionTemplate::New(Get));
 		
+		global->Set(String::New("HttpClient"), FunctionTemplate::New(New));
 		global->Set(String::New("Http"), httpTempl);
+		
 	}
 }

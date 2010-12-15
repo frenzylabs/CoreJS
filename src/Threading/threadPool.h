@@ -4,11 +4,15 @@
 #ifndef event_threadPool_H
 #define event_threadPool_H
 
+#include <errno.h>
+#include <signal.h>
+
+#include <iostream>
 #include <map>
 #include <queue>
-#include "session.h"
 #include "workerThread.h"
 #include "BaseEvent.h"
+#include "ThreadBase.h"
 
 using namespace v8;
 
@@ -28,7 +32,6 @@ class ThreadPool{
 			}
 			return s_instance;
 		}
-		int curIndex;
 		int numThreads;
 		int maxThreads;
 		int finished;
@@ -36,21 +39,16 @@ class ThreadPool{
 		
 		event * wakeup_event;		
 		
-		std::queue<Session*> wqueue;
+		std::queue<ThreadBase* > wqueue;
 		std::map<pthread_t, WorkerThread*> wk;
 		
 		int wakeup_pipe_out;
 		int wakeup_pipe_in;
 		
-		pthread_mutex_t lock;
 		pthread_mutex_t threadLock;
-		pthread_cond_t isIdle, isEmpty;
-		pthread_cond_t isFull;
-
-		static void onWakeup(evutil_socket_t fd, short what, void *arg);
-		void dispatch(Session*sp);
-		int saveThread(WorkerThread *thread);
 		
+		static void onNotify(evutil_socket_t fd, short what, void *arg);
+		void dispatch(ThreadBase *t);
 	
 };
 	

@@ -19,29 +19,37 @@
 #include <fcntl.h>
 
 #include "threadPool.h"
+#include "ThreadBase.h"
 #include "url.h"
 #include <iostream>
-#include "session.h"
 #include <ObjectWrapT.h>
 
 using namespace v8;
 
 namespace Core
 {	
-	class Http : Core::ObjectWrapT<Http>
+	class Http : Core::ObjectWrapT<Http>, CallbackTemplate<Http>
 	{
 		public:	
 			Http(){};
 			~Http(){};
-		
-			v8::Persistent<v8::Function> callback;
+			
+			std::string host;
+			std::string path;
+			int port;
+			std::string params;
 			
 			static void Init   (Handle<ObjectTemplate> &obj);
-			static std::string getPostData(Session *te);
-			static std::string getGetData(Session *te);
-			
+			static std::string getGetData(Session *te);		 
+			std::string getPostData();	
+
 			JS_METHOD_DECLARE(Get);
 			JS_METHOD_DECLARE(Post);
+			
+			JS_METHOD_DECLARE(GetObj);
+			JS_METHOD_DECLARE(PostObj);
+			
+			JS_METHOD_DECLARE(New);
 	};
 }
 

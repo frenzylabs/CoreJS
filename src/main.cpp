@@ -1,5 +1,6 @@
 #include "main.h"
 #include "BaseEvent.h"
+#include "signal.h"
 #include <vector>
 #include <algorithm>
 #include "session.h"
@@ -7,7 +8,6 @@
 using namespace std;
 using namespace v8;
 using namespace Core;
-
 
 
 static int SetNonBlocking(int fd) {
@@ -86,25 +86,6 @@ int RunMain (int argc, char const *argv[])
 	mainpath = mainpath.substr(0, mainpath.rfind('/'));
 
 
-	evthread_use_pthreads();
-	
-
-	int fds[2];
-	if (pipe(fds)) {
-	  cerr << "pipe() failed, errno: " << errno;
-	   return false;
-	}
-	if (SetNonBlocking(fds[0])) {
-	  cerr << "SetNonBlocking for pipe fd[0] failed, errno: " << errno;
-	  return false;
-	}
-	if (SetNonBlocking(fds[1])) {
-	  cerr << "SetNonBlocking for pipe fd[1] failed, errno: " << errno;
-	  return false;
-	}
-	myThreadPool->wakeup_pipe_out = fds[0];
-	myThreadPool->wakeup_pipe_in = fds[1];
-	
 
 	V8::Initialize();
 	HandleScope scope;
@@ -127,11 +108,29 @@ int RunMain (int argc, char const *argv[])
 	
 	pthread_mutex_lock(&myThreadPool->threadLock);
 	if(myThreadPool->eventCnt>0){
-		myThreadPool->wakeup_event = event_new(myEvents->base, myThreadPool->wakeup_pipe_out, EV_READ|EV_PERSIST, ThreadPool::onWakeup, (void *)"");
+		
+		int fds[2];
+		if (pipe(fds)) {
+			cerr << "pipe() failed, errno: " << errno;
+			return false;
+		}
+	
+		if (SetNonBlocking(fds[0])) {
+		  cerr << "SetNonBlocking for pipe fd[0] failed, errno: " << errno;
+		  return false;
+		}
+
+		myThreadPool->wakeup_pipe_out = fds[0];
+		myThreadPool->wakeup_pipe_in = fds[1];
+		
+		myThreadPool->wakeup_event = event_new(myEvents->base, myThreadPool->wakeup_pipe_out, EV_READ|EV_PERSIST, ThreadPool::onNotify, (void *)"");
 		event_add(myThreadPool->wakeup_event, NULL);
+		
 	}
 	pthread_mutex_unlock(&myThreadPool->threadLock);
 	
+	evthread_use_pthreads();
+
 	event_base_dispatch(myEvents->base);
 
 	

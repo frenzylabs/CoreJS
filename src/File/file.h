@@ -3,13 +3,12 @@
 
 #include "common.h"
 #include <ObjectWrapT.h>
-
-class Session;
+#include "ThreadBase.h"
 
 using namespace v8;
 namespace Core
 {
-	class File : Core::ObjectWrapT<File>
+	class File : Core::ObjectWrapT<File>, CallbackTemplate<File>
 	{	
 		protected:
 			FILE *file;
@@ -20,10 +19,8 @@ namespace Core
 			File();
 			~File();
 
-			v8::Persistent<v8::Function> callback;
-
 			// C/C++ Methods
-			static std::string readFileCb(Session * fp);
+			std::string readFileCb();
 			static char * ReadFile(const char *name);
 			static void Init   (Handle<ObjectTemplate> &obj);
 
