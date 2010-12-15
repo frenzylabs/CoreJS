@@ -50,7 +50,7 @@ OBJS = $(SOURCES:.cpp=.o)
 CC=g++
 CXXFLAGS= -arch i386 -Wall -lpthread -levent
 
-all: $(OBSJ) 
+all: $(OBJS) 
 	$(CC) $(CXXFLAGS) $(HEADERS) $(SOURCES) -o $(TARGET) $(LIBS)
 clean:
 	rm -rf build/*
