@@ -11,9 +11,21 @@ using namespace std;
 
 namespace Core
 {
+   /**
+    * Class construct method
+    */
    Path::Path(){}
+   
+   /**
+    * Class deconstruct method
+    */
    Path::~Path() {}
    
+   /**
+    * Method find the last slash of path
+    *
+    * @param {string} path to get last slash
+    */
    size_t Path::LastSlash(string pathname)
    {
       size_t pos = pathname.find_last_of('/');
@@ -23,6 +35,11 @@ namespace Core
       return pos;
    }
    
+   /**
+    * Take a path string and normalize (., ..).
+    *
+    * @param {string} path to use.
+    */
    string Path::Normalize(string pathname)
    {
       char *cPath = new char[PATH_MAX];
@@ -33,6 +50,11 @@ namespace Core
       return res;
    }
    
+   /**
+    * Grab the filename from a path
+    *
+    * @param {string} path with file.
+    */
    string Path::Filename(string pathname)
    {
       size_t pos = Path::LastSlash(pathname);
@@ -42,6 +64,11 @@ namespace Core
       return pathname;
    }
    
+   /**
+    * Get the directory (last directory) from a path
+    *
+    * @param {string} path to parse for directory name
+    */
    string Path::Dirname(string pathname)
    {
       size_t pos = Path::LastSlash(pathname);
@@ -51,6 +78,13 @@ namespace Core
       return pathname;
    }
    
+   /**
+    * Test a path for file and add/resolve file's extension
+    *
+    * @param {string} path to file
+    * @param {string} reference to the final path with extension
+    * @param {string} reference to extension string to populate with resulting extension.
+    */
    bool Path::FileExtension(string pathname, string &resultPath, string &extension)
    {
       vector<string> exts;
@@ -99,11 +133,21 @@ namespace Core
       return false;
    }
    
+   /**
+    * Test if the given path is absolute.
+    *
+    * @param {string} path to test
+    */
    bool Path::IsAbsolute(string pathname)
    {
       return (pathname.length() == 0)? false : (pathname.at(0) == '/');
    }
    
+   /**
+    * Test to see if a file exists
+    *
+    * @param {string} path with filename
+    */
    bool Path::FileExists(string pathname)
    {
       struct stat st;
@@ -116,6 +160,11 @@ namespace Core
       return true;
    }
    
+   /**
+    * Test to see if a directory exists
+    *
+    * @param {string} path to test
+    */
    bool Path::DirExists(string pathname)
    {
       struct stat st;
@@ -128,6 +177,9 @@ namespace Core
       return false;
    }
    
+   /**
+    * Path method to return a string of the current working directory
+    */
    string Path::Cwd()
    {
       char *buffer = getcwd(NULL, 0);
@@ -137,6 +189,11 @@ namespace Core
       return result;
    }
    
+   /**
+    * Change current working directory to path given
+    *
+    * @param {string} path to change to.
+    */
    int Path::Chdir(string pathname)
    {
       return chdir(pathname.c_str());

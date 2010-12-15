@@ -17,6 +17,10 @@ using namespace std;
 
 namespace Core
 {
+   /**
+    * @Class Path
+    * Handles system level path traversing and resolving.
+    */
    class Path
    {
    public:

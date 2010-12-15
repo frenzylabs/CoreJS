@@ -8,4 +8,8 @@
       print("\nCONNECTED\n");
    else
       print("\n" + JSON.stringify(mysql.error()) + "\n");
+      
+      
+   mysql.query("SELECT * FROM ...");
+   var resultObject = mysql.fetchObjects();
 })();
