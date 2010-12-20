@@ -1,9 +1,7 @@
 #include "main.h"
 #include "BaseEvent.h"
-#include "signal.h"
 #include <vector>
 #include <algorithm>
-#include "session.h"
 
 using namespace std;
 using namespace v8;

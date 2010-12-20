@@ -36,12 +36,12 @@ class ThreadPool{
 		int maxThreads;
 		int finished;
 		int eventCnt;
-		
-		event * wakeup_event;		
+				
 		
 		std::queue<ThreadBase* > wqueue;
 		std::map<pthread_t, WorkerThread*> wk;
 		
+		event * wakeup_event;
 		int wakeup_pipe_out;
 		int wakeup_pipe_in;
 		

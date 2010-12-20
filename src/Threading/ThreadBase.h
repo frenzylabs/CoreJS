@@ -16,7 +16,7 @@ class ThreadBase{
 	      // to make the function call
 	      virtual std::string operator()()=0;  // call using operator
 	      virtual std::string Call()=0;        // call using function
-		};
+};
 
 template <typename T>
 	class CallbackTemplate : public ThreadBase{
@@ -33,7 +33,7 @@ template <typename T>
 			}
 			
 			// override operator "()"
-			virtual std::string operator()() { return (*obj.*fpt)();};              // execute member function
+			virtual std::string operator()() { return (obj->*fpt)();};              // execute member function
 
 			// override function "Call"
 			virtual std::string Call()

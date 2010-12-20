@@ -1,10 +1,10 @@
-SRC_DIR = src
 ## NOTE: TO BUILD v8::
 ## do: sudo su && cd /usr/local
 ## Checkout from: svn checkout http://v8.googlecode.com/svn/trunk/ v8
 ## then (for debug) run: scons mode=debug library=shared
 ## once that is done, run: install_name_tool -id /usr/local/v8/libv8_g.dylib libv8_g.dylib
 
+SRC_DIR = src
 BUILD_TARGET = build/core
 V8_DIR       = /usr/local/v8/libv8_g.dylib
 V8_INC       = /usr/local/v8/include
@@ -50,7 +50,7 @@ OBJS = $(SOURCES:.cpp=.o)
 CC=g++
 CXXFLAGS= -arch i386 -Wall -lpthread -levent
 
-all: $(OBJS) 
+all: $(OBSJ) 
 	$(CC) $(CXXFLAGS) $(HEADERS) $(SOURCES) -o $(TARGET) $(LIBS)
 clean:
 	rm -rf build/*

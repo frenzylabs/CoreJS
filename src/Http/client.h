@@ -40,7 +40,7 @@ namespace Core
 			std::string params;
 			
 			static void Init   (Handle<ObjectTemplate> &obj);
-			static std::string getGetData(Session *te);		 
+			std::string getGetData();		 
 			std::string getPostData();	
 
 			JS_METHOD_DECLARE(Get);

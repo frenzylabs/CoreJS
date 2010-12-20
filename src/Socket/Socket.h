@@ -38,11 +38,8 @@ namespace Core
 		~Socket();
 
 		std::map<std::string, v8::Persistent<v8::Function> > FuncIsSet;
-		std::map<int, Socket * > sockMap;
 		std::map<std::string, event * > whichEvents;
-		std::map<int, event * > socketEvents;
 		
-		evconnlistener *listener;
 		
 		// C/C++ Methods
 		static void Init   (Handle<ObjectTemplate> &obj);

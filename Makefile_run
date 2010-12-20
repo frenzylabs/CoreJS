@@ -13,20 +13,20 @@ SOURCES =   $(SRC_DIR)/main.cpp \
             $(SRC_DIR)/System/system.cpp \
             $(SRC_DIR)/Env/env.cpp \
             $(SRC_DIR)/Directory/directory.cpp \
-				$(SRC_DIR)/File/file.cpp \
-				$(SRC_DIR)/Http/url.cpp \
+			$(SRC_DIR)/File/file.cpp \
+			$(SRC_DIR)/Http/url.cpp \
             $(SRC_DIR)/Path/path.cpp \
             $(SRC_DIR)/Path/pathHistory.cpp \
             $(SRC_DIR)/Module/module.cpp
          
 HEADERS =   -I/usr/local/include \
-				-I$(V8_INC) \
+			-I$(V8_INC) \
             -I$(SRC_DIR) \
             -I$(SRC_DIR)/Headers \
             -I$(SRC_DIR)/System \
             -I$(SRC_DIR)/Env \
             -I$(SRC_DIR)/Directory \
-				-I$(SRC_DIR)/File \
+			-I$(SRC_DIR)/File \
             -I$(SRC_DIR)/Path \
             -I$(SRC_DIR)/Module 
 

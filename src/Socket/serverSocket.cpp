@@ -29,7 +29,7 @@ namespace Core
 
 
 	void ServerSocket::sighup_function(evutil_socket_t fd, short what, void * s){
-		Socket * so = static_cast<Socket *>(s);
+		ServerSocket * so = static_cast<ServerSocket *>(s);
 		cout << "\n Connection was lost \n";
 
 		/** Notifies all connected sockets that the server has gone offline  ***/
