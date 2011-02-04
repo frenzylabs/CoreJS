@@ -44,7 +44,7 @@ using namespace v8;
 #define ARG_MAX_LENGTH(count)           if(args.Length() < count) \
                                             return ThrowException(String::New("Maximum arguments required is count"));
 
-#define JS_METHOD_DECLARE(name)         static Handle<Value>name          (const Arguments &args);
+#define JS_METHOD_DECLARE(name)         static Handle<Value>name          (const Arguments &args)
 #define JS_METHOD(name)                 Handle<Value>name                 (const Arguments &args)
 
 #endif

@@ -46,14 +46,13 @@ libs = [
 
 flags = [
 	"-Wall",
-	"-lpthread", 
-	"-levent",
+	"-pthread", 
 ]
 
 env.Append(CPPPATH=lib_headers)
 env.Append(LIBS=libs)
-env.Append(CPPFLAGS=flags)
 env.Append(LIBPATH=['/usr/local/lib', '/usr/local/v8/'])
+env.Append(CPPFLAGS=flags)
 
 
 env.SharedLibrary(target=lib_target, source=lib_sources)
