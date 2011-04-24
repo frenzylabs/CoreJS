@@ -1,0 +1,5 @@
+.DS_Store
+.sconf_temp
+.sconsign.dblite
+*.os
+config.log

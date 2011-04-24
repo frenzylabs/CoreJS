@@ -1,0 +1,75 @@
+import os
+
+env = Environment(ENV=os.environ)
+
+src_dir = "src/%s"
+
+lib_target 	= "build/core"
+lib_sources	= [
+	src_dir % "/Directory/directory.cpp",
+	src_dir % "/Env/env.cpp",
+	src_dir % "/File/file.cpp",
+	src_dir % "/Module/module.cpp",
+	src_dir % "/Path/path.cpp",
+	src_dir % "/Path/pathHistory.cpp",
+	src_dir % "/System/system.cpp",
+	src_dir % "/Events/BaseEvent.cpp",
+	src_dir % "/Http/client.cpp",
+	src_dir % "/Http/url.cpp",
+	src_dir % "/Socket/clientSocket.cpp",
+	src_dir % "/Socket/serverSocket.cpp",
+	src_dir % "/Socket/Socket.cpp",
+	src_dir % "/Threading/threadPool.cpp",
+]
+
+lib_headers = [
+	"/usr/local/v8/include/",
+	"/usr/local/v8/",
+	src_dir % "/",
+	src_dir % "/Headers/",
+	src_dir % "/Directory/",
+	src_dir % "/Env/",
+	src_dir % "/File/",
+	src_dir % "/Module/",
+	src_dir % "/Path/",
+	src_dir % "/Path/",
+	src_dir % "/System/",
+	src_dir % "/Events/",
+	src_dir % "/Http/",
+	src_dir % "/Socket/",
+	src_dir % "/Threading/",
+]
+
+libs = [
+	"libv8",
+	"libevent",
+]
+
+flags = [
+	"-Wall",
+	"-pthread", 
+]
+
+env.Append(CPPPATH=lib_headers)
+env.Append(LIBS=libs)
+env.Append(LIBPATH=['/usr/local/lib', '/usr/local/v8/'])
+env.Append(CPPFLAGS=flags)
+
+
+conf = Configure(env)
+
+if not conf.CheckCXX():
+	print('Compiler and/or environment is not configured correctly')
+	Exit(0)
+
+for lib in libs:
+	 if not conf.CheckLib(lib):
+		print "%s is required to build CoreJS" % lib
+		Exit(1)
+
+if not conf.CheckHeader('v8.h'):
+	print "Cannot locate v8 (v8.h) header file"
+	Exit(1)
+
+env = conf.Finish()
+env.SharedLibrary(target=lib_target, source=lib_sources)
