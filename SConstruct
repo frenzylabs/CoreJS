@@ -9,7 +9,22 @@ headers.insert(0, "/usr/local/v8")
 headers.insert(0, "/usr/local/v8/include")
 headers.insert(0, "/usr/local/lib")
 
-lib_sources	= Glob("%s/*.cpp" % src_dir)
+lib_sources	= [
+	src_dir % "/Directory/directory.cpp",
+	src_dir % "/Env/env.cpp",
+	src_dir % "/File/file.cpp",
+	src_dir % "/Module/module.cpp",
+	src_dir % "/Path/path.cpp",
+	src_dir % "/Path/pathHistory.cpp",
+	src_dir % "/System/system.cpp",
+	src_dir % "/Events/BaseEvent.cpp",
+	src_dir % "/Http/client.cpp",
+	src_dir % "/Http/url.cpp",
+	src_dir % "/Socket/clientSocket.cpp",
+	src_dir % "/Socket/serverSocket.cpp",
+	src_dir % "/Socket/Socket.cpp",
+	src_dir % "/Threading/threadPool.cpp",
+]
 
 lib_paths = [
 	'/usr/local/lib', 
