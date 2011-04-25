@@ -3,3 +3,4 @@
 .sconsign.dblite
 *.os
 config.log
+build/*
