@@ -14,4 +14,7 @@
 #include "threadPool.h"
 #include "Socket.h"
 
+
+int RunMain (int argc, char const *argv[]);
+
 #endif

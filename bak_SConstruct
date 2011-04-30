@@ -48,6 +48,7 @@ libs = [
 flags = [
 	"-Wall",
 	"-pthread", 
+	"-fno-common"
 ]
 
 env.Append(CPPPATH=lib_headers)

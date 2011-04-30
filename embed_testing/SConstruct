@@ -1,0 +1,42 @@
+import os 
+
+core_src = "/Users/wescope/Desktop/wess/CoreJS/src"
+
+headers = [
+	"/usr/local/v8",
+	"/usr/local/v8/include",
+	"/usr/local/lib",
+	core_src,
+]
+
+headers.extend(["%s/%s/" % (core_src, name) for name in os.listdir(core_src) if os.path.isdir(os.path.join(core_src, name))])
+
+lib_sources = ["main.cpp"]
+
+lib_paths = [
+	'/usr/local/lib', 
+	'/usr/local/v8', 
+	'/usr/local/v8/include',
+	"/Users/wescope/Desktop/wess/CoreJS/build",
+]
+
+libs = [
+	"libv8",
+	"libevent",
+	"libcore",
+]
+
+flags = [
+	"-Wall",
+	"-pthread", 
+	"-mmacosx-version-min=10.4", 
+	"-pedantic",
+]
+
+env = Environment(ENV=os.environ)
+env.Append(LIBPATH=lib_paths, LIBS=libs)
+env.Append(CPPPATH=headers)
+env.Append(CPPFLAGS=flags)
+
+
+env.Program(target="build/testing", source=lib_sources)

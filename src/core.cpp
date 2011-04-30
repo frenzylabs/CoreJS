@@ -1,4 +1,4 @@
-#include "main.h"
+#include "core.h"
 #include "BaseEvent.h"
 #include <vector>
 #include <algorithm>
@@ -51,7 +51,7 @@ void AtExit()
 }
 
 
-int RunMain (int argc, char const *argv[])
+int RunCore (int argc, char const *argv[])
 {
 	
 	string filename;
@@ -143,10 +143,3 @@ int RunMain (int argc, char const *argv[])
 
 	return 0;
 }
-
-/*
-int main (int argc, char const *argv[])
-{
-    return RunMain(argc, argv);
-}
-*/
